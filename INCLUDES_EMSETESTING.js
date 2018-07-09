@@ -1,25 +1,92 @@
 /*===========================================
 
-Title : INCLUDES_EMSETESTING
+Title: INCLUDES_EMSETESTING
 
-Purpose : Library of functions for EMSE unit and functional testing
+Purpose: Library of functions for EMSE unit and functional testing
 
-Author : Chris Hansen
+Author: Chris Hansen
 
-Functional Area : EMSE
+Functional Area: EMSE
 
-Description : Library of functions for EMSE unit and functional testing
+Description: Library of functions for EMSE unit and functional testing
 
-Reviewed By :
+Reviewed By:
 
-Script Type : (EMSE, EB, Pageflow, Batch) : EMSE
+Script Type: (EMSE, EB, Pageflow, Batch) : EMSE
 
-General Purpose/Client Specific : General Purpose
+General Purpose/Client Specific: General Purpose
 
-Parameters : varies depend on function
+Parameters: varies depend on function
 
 =========================================== */
 
+/**
+ * Creates a record from the provided JSON object. 
+ * 
+ * @param {JSON} recordTypeJSON 
+ * @returns record object
+ */
+function MockupRecord(recordTypeJSON) {
+    var functTitle = "MockupRecord: ";
+
+    if (typeof (recordTypeJSON) == "undefined" || recordTypeJSON == null) {
+        logDebug(functTitle + "JSON parameter is undefined or null");
+        return "";
+    }
+
+    var recordType = recordTypeJSON.recordType || "";
+    var applicationName = recordTypeJSON.applicationName || "";
+    var description = recordTypeJSON.description || "";
+    if (recordType == "") {
+        logDebug(functTitle + "Record type is blank or null");
+        return "";
+    }
+
+    var recordObj = createCap(recordType, applicationName);
+
+    var recObj = new Record(recordObj);
+
+    //add addresses
+    var addresses = recordTypeJSON.addresses || "";
+    if (addresses != "") {
+        addresses.forEach(function (address) {
+            recObj.addAddress(address);
+        });
+    }
+
+    //add contacts
+    var contacts = recordTypeJSON.contacts || "";
+    if (contacts != "") {
+        contacts.forEach(function (contact) {
+            recObj.addContact(contact);
+        });
+    }
+
+    //add professionals
+    var professionals = recordTypeJSON.licenseProfessionals || "";
+    if (professionals != "") {
+        professionals.forEach(function (professional) {
+            recObj.addProfessional(professional);
+        });
+    }
+
+    //add custom fields
+    var customFields = recordTypeJSON.customFields || "";
+    if (customFields != "") {
+        customFields.forEach(function (customField) {
+            recObj.addCustomField(customField);
+        });
+    }
+
+    return recordObj;
+}
+
+/**
+ * Constructor function for the TestRecord prototypes.
+ * 
+ * @memberof TestRecord
+ * @param {string or object} Record id string or record object
+ */
 function TestRecord(id) {
     var functTitle = ((this.constructor == null) ? "undefined" : this.constructor.name) + ": ";
 
@@ -30,24 +97,30 @@ function TestRecord(id) {
         throw functTitle + "id parameter can't be null or blank when initialized.";
     }
     if (id.getClass && id.getClass().getName().equals("com.accela.aa.aamain.cap.CapIDModel")) {
-		this.recordObj = id;
-		this.altIdObj = id.getCustomID();
-		if (!this.altIdObj) {
-			this.recordObj = aa.cap.getCapID(id.getID1(), id.getID2(), id.getID3()).getOutput();
-			this.altIdObj = this.recordObj.getCustomID();
-		}
-	} else {
-		id = id + "";
-		this.altIdObj = id;
-		this.recordObj = aa.cap.getCapID(id).getOutput();
-	}
-	if (this.recordObj == null) {
-		throw functTitle + "record with ID " + id + " does not exist";
+        this.recordObj = id;
+        this.altIdObj = id.getCustomID();
+        if (!this.altIdObj) {
+            this.recordObj = aa.cap.getCapID(id.getID1(), id.getID2(), id.getID3()).getOutput();
+            this.altIdObj = this.recordObj.getCustomID();
+        }
+    } else {
+        id = id + "";
+        this.altIdObj = id;
+        this.recordObj = aa.cap.getCapID(id).getOutput();
+    }
+    if (this.recordObj == null) {
+        throw functTitle + "record with ID " + id + " does not exist";
     }
     logDebug(functTitle + "-------------------------------------------------------------");
     logDebug(functTitle + "initialized test record " + this.altIdObj);
 }
 
+/**
+ * [[DESCRIPTION]]
+ * @param {*} [[OPTIONAL/REQUIRED]]. [[DESCRIPTION]].
+ * @memberof TestRecord
+ * @returns {*} [[DESCRIPTION]].
+ */
 TestRecord.prototype.assertStatus = function (statusString) {
     var functTitle = ".assertStatus: ";
 
@@ -55,23 +128,28 @@ TestRecord.prototype.assertStatus = function (statusString) {
     logDebug(functTitle + "Assert Record Status ");
 
     var assertRetVal = false;
-    var recordObj =aa.cap.getCap(this.recordObj).getOutput();
+    var recordObj = aa.cap.getCap(this.recordObj).getOutput();
     var existingStatusString = recordObj.getCapStatus();
-    
+
     logDebug(functTitle + "** Expected Record Status: " + statusString);
     logDebug(functTitle + "** Existing Record Status: " + existingStatusString);
-    
+
     if (existingStatusString == statusString) {
         logDebug(functTitle + "** TRUE: existing Record Status = asserted Record Status.");
         assertRetVal = true;
-    }
-    else {
+    } else {
         logDebug(functTitle + "** FALSE: existing Record Status != asserted Record Status.");
     }
 
     return assertRetVal;
 };
 
+/**
+ * [[DESCRIPTION]]
+ * @param {*} [[OPTIONAL/REQUIRED]]. [[DESCRIPTION]].
+ * @memberof TestRecord
+ * @returns {*} [[DESCRIPTION]].
+ */
 TestRecord.prototype.assertCustomId = function (customIdString) {
     var functTitle = ".assertCustomId: ";
 
@@ -93,6 +171,12 @@ TestRecord.prototype.assertCustomId = function (customIdString) {
     return assertRetVal;
 };
 
+/**
+ * [[DESCRIPTION]]
+ * @param {*} [[OPTIONAL/REQUIRED]]. [[DESCRIPTION]].
+ * @memberof TestRecord
+ * @returns {*} [[DESCRIPTION]].
+ */
 TestRecord.prototype.assertInspectionExists = function (inspectionTypeString) {
     var functTitle = ".assertInspectionExists: ";
 
@@ -101,7 +185,7 @@ TestRecord.prototype.assertInspectionExists = function (inspectionTypeString) {
 
     var assertRetVal = false;
     var inspResultObj = aa.inspection.getInspections(this.recordObj);
-    
+
     if (inspResultObj.getSuccess()) {
         var inspectionList = inspResultObj.getOutput();
         if (inspectionList.length > 0) {
@@ -112,7 +196,7 @@ TestRecord.prototype.assertInspectionExists = function (inspectionTypeString) {
                 var existingInspection = inspectionList[i];
 
                 logDebug(functTitle + "** Existing Inspection Type on Record: " + inspectionList[i].inspectionType);
-                
+
                 if (inspectionTypeString == inspectionList[i].inspectionType) {
                     logDebug(functTitle + "** TRUE: inspection type '" + inspectionTypeString + "' exists as an inspection on the record.");
                     assertRetVal = true;
@@ -129,7 +213,13 @@ TestRecord.prototype.assertInspectionExists = function (inspectionTypeString) {
     return assertRetVal;
 };
 
- TestRecord.prototype.assertCustomFieldValue = function (customFieldNameString, customFieldValueString) {
+/**
+ * [[DESCRIPTION]]
+ * @param {*} [[OPTIONAL/REQUIRED]]. [[DESCRIPTION]].
+ * @memberof TestRecord
+ * @returns {*} [[DESCRIPTION]].
+ */
+TestRecord.prototype.assertCustomFieldValue = function (customFieldNameString, customFieldValueString) {
     var functTitle = ".assertCustomFieldValue: ";
 
     logDebug(functTitle + "-------------------------------------------------------------");
@@ -151,6 +241,12 @@ TestRecord.prototype.assertInspectionExists = function (inspectionTypeString) {
     return assertRetVal;
 };
 
+/**
+ * [[DESCRIPTION]]
+ * @param {*} [[OPTIONAL/REQUIRED]]. [[DESCRIPTION]].
+ * @memberof TestRecord
+ * @returns {*} [[DESCRIPTION]].
+ */
 TestRecord.prototype.assertWorkflowTaskStatus = function (workflowTaskString, workflowTaskStatusString) {
     var functTitle = ".assertWorkflowTaskStatus: ";
 
@@ -158,7 +254,7 @@ TestRecord.prototype.assertWorkflowTaskStatus = function (workflowTaskString, wo
     logDebug(functTitle + "Assert Workflow Task has specific status");
 
     var assertRetVal = false;
-    var existingWorkflowTaskStatus = taskStatus(workflowTaskString,"",this.recordObj);
+    var existingWorkflowTaskStatus = taskStatus(workflowTaskString, "", this.recordObj);
 
     logDebug(functTitle + "** Expected Workflow Status for '" + workflowTaskString + "' on Record: " + workflowTaskStatusString);
     logDebug(functTitle + "** Existing Custom Field Value for '" + workflowTaskString + "' on Record: " + existingWorkflowTaskStatus);
@@ -173,6 +269,12 @@ TestRecord.prototype.assertWorkflowTaskStatus = function (workflowTaskString, wo
     return assertRetVal;
 };
 
+/**
+ * [[DESCRIPTION]]
+ * @param {*} [[OPTIONAL/REQUIRED]]. [[DESCRIPTION]].
+ * @memberof TestRecord
+ * @returns {*} [[DESCRIPTION]].
+ */
 TestRecord.prototype.assertWorkflowTaskActive = function (workflowTaskString) {
     var functTitle = ".assertWorkflowTaskActive: ";
 
