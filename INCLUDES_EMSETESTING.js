@@ -1,3 +1,4 @@
+//@ts-check
 /*===========================================
 
 Title: INCLUDES_EMSETESTING
@@ -116,10 +117,10 @@ function TestRecord(id) {
 }
 
 /**
- * [[DESCRIPTION]]
- * @param {*} [[OPTIONAL/REQUIRED]]. [[DESCRIPTION]].
+ * Verifies that the record status matches the parameter
+ * @param {string} statusString status to test against the record.
  * @memberof TestRecord
- * @returns {*} [[DESCRIPTION]].
+ * @returns {boolean} True if matched, false if not.
  */
 TestRecord.prototype.assertStatus = function (statusString) {
     var functTitle = ".assertStatus: ";
